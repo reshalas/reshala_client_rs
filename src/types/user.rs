@@ -38,9 +38,9 @@ impl User {
             .unwrap();
         let responce = client.execute(request).await.unwrap();
         if responce.status() == StatusCode::OK {
-            return Ok(serde_json::from_str::<User>(responce.text().unwrap().as_str()).unwrap());
+            return Ok(serde_json::from_str::<User>(responce.text().await.unwrap().as_str()).unwrap());
         }
-        Err(responce.text().unwrap())
+        Err(responce.text().await.unwrap())
     }
 
     async fn refresh(&mut self) {
@@ -65,11 +65,11 @@ impl User {
         match responce.status() {
             StatusCode::OK => Ok(Some(responce.json().await.unwrap())),
             StatusCode::NOT_FOUND => Ok(None),
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
-    pub fn add_slot(&mut self, dto: SlotDTO) -> Result<(), String> {
+    pub async fn add_slot(&mut self, dto: SlotDTO) -> Result<(), String> {
         let url = format!("{}/users/slots/activate", DOMEN.to_string());
         let client = Client::new();
         let request = client
@@ -84,11 +84,11 @@ impl User {
                 self.refresh().await;
                 Ok(())
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
-    pub fn remove_slot(&mut self, subject: Subjects) -> Result<(), String> {
+    pub async fn remove_slot(&mut self, subject: Subjects) -> Result<(), String> {
         let url = format!("{}/users/slots/deactivate/{:?}", DOMEN.to_string(), subject);
         let client = Client::new();
         let request = client
@@ -96,14 +96,14 @@ impl User {
             .headers(self.build_headers())
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
-        self.refresh();
+        let responce = client.execute(request).await.unwrap();
+        self.refresh().await;
         match responce.status() {
             StatusCode::OK => {
-                self.refresh();
+                self.refresh().await;
                 Ok(())
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
@@ -152,7 +152,7 @@ impl User {
     }
 
     //Сеттеры
-    pub fn change_email(&mut self, email: String) -> Result<(), String> {
+    pub async fn change_email(&mut self, email: String) -> Result<(), String> {
         let url = format!("{}/users/change/email/{}", DOMEN.to_string(), email);
         let client = Client::new();
         let request = client
@@ -161,17 +161,17 @@ impl User {
             .headers(self.build_headers())
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                self.refresh();
+                self.refresh().await;
                 Ok(())
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
-    pub fn change_phone_number(&mut self, phone: Option<String>) -> Result<(), String> {
+    pub async fn change_phone_number(&mut self, phone: Option<String>) -> Result<(), String> {
         let url = format!(
             "{}/users/change/phone/{}",
             DOMEN.to_string(),
@@ -187,37 +187,37 @@ impl User {
             .headers(self.build_headers())
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                self.refresh();
+                self.refresh().await;
                 Ok(())
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
     //Работа с тасками
-    pub fn publish_task(&mut self, dto: TaskDTO) -> Result<Task, String> {
+    pub async fn publish_task(&mut self, dto: TaskDTO) -> Result<Task, String> {
         let url = format!("{}/users/publish_task", DOMEN.to_string(),);
-        let client = reqwest::blocking::Client::new();
+        let client = Client::new();
         let request = client
             .post(url)
             .headers(self.build_headers())
             .json(&dto)
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                self.refresh();
-                responce.json().unwrap()
+                self.refresh().await;
+                responce.json().await.unwrap()
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
-    pub fn accept_task(&mut self, task: Task) -> Result<Transaction, String> {
+    pub async fn accept_task(&mut self, task: Task) -> Result<Transaction, String> {
         let url = format!("{}/users/accept_task/{}", DOMEN.to_string(), task.uuid());
         let client = Client::new();
         let request = client
@@ -225,32 +225,32 @@ impl User {
             .headers(self.build_headers())
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                let result = responce.json().unwrap();
-                self.refresh();
+                let result = responce.json().await.unwrap();
+                self.refresh().await;
                 result
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 
     //рейтинг
-    pub fn rate(&mut self, mark: u8) -> Result<(), String> {
+    pub async fn rate(&mut self, mark: u8) -> Result<(), String> {
         if mark > 5 {
             panic!("Wrong mark")
         }
         let url = format!("{}/users/rate/{}", DOMEN.to_string(), mark);
         let client = Client::new();
         let request = client.post(url).build().unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                self.refresh();
+                self.refresh().await;
                 Ok(())
             }
-            _ => Err(responce.text().unwrap()),
+            _ => Err(responce.text().await.unwrap()),
         }
     }
 

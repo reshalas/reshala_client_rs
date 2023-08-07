@@ -13,14 +13,14 @@ impl Slot {
         self.limit
     }
 
-    pub fn update_limit(&mut self, limit: Option<i32>) {
-        let client = reqwest::blocking::Client::new();
+    pub async fn update_limit(&mut self, limit: Option<i32>) {
+        let client = reqwest::Client::new();
         let request = client
             .post(DOMEN.to_string() + "/slots/" + self.uuid().as_str() + "/update_limit")
             .json(&SlotLimitDTO{limit})
             .build()
             .unwrap();
-        client.execute(request).unwrap();
+        client.execute(request).await.unwrap();
     }
 
     pub fn subject(&self) -> Subjects {
