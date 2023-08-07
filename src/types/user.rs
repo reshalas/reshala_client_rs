@@ -3,8 +3,7 @@ use crate::{
     dto::{EmailDTO, PhoneDTO, SingDto, SlotDTO, TaskDTO, UserDTO},
     DOMEN, PASSWORD_HEADER, USERNAME_HEADER,
 };
-use reqwest::{
-    blocking::Client,
+use reqwest::{Client,
     header::{HeaderMap, HeaderValue},
     StatusCode,
 };
@@ -30,30 +29,30 @@ impl User {
         headers
     }
 
-    pub fn register(user: UserDTO) -> Result<User, String> {
+    pub async fn register(user: UserDTO) -> Result<User, String> {
         let client = Client::new();
         let request = client
             .post(DOMEN.to_string() + "/users/register")
             .json(&user)
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         if responce.status() == StatusCode::OK {
             return Ok(serde_json::from_str::<User>(responce.text().unwrap().as_str()).unwrap());
         }
         Err(responce.text().unwrap())
     }
 
-    fn refresh(&mut self) {
+    async fn refresh(&mut self) {
         let new_data = User::get(SingDto {
             username: self.username(),
             password: self.password(),
-        })
+        }).await
         .unwrap();
         *self = new_data.unwrap();
     }
 
-    pub fn get(sing_data: SingDto) -> Result<Option<User>, String> {
+    pub async fn get(sing_data: SingDto) -> Result<Option<User>, String> {
         let client = Client::new();
         let responce = client
             .get(format!(
@@ -61,10 +60,10 @@ impl User {
                 DOMEN, sing_data.username, sing_data.password
             ))
             .headers(User::build_headers_from_dto(sing_data))
-            .send()
+            .send().await
             .unwrap();
         match responce.status() {
-            StatusCode::OK => Ok(Some(responce.json().unwrap())),
+            StatusCode::OK => Ok(Some(responce.json().await.unwrap())),
             StatusCode::NOT_FOUND => Ok(None),
             _ => Err(responce.text().unwrap()),
         }
@@ -79,10 +78,10 @@ impl User {
             .headers(self.build_headers())
             .build()
             .unwrap();
-        let responce = client.execute(request).unwrap();
+        let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                self.refresh();
+                self.refresh().await;
                 Ok(())
             }
             _ => Err(responce.text().unwrap()),
