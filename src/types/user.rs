@@ -3,9 +3,9 @@ use crate::{
     dto::{EmailDTO, PhoneDTO, SingDto, SlotDTO, TaskDTO, UserDTO},
     DOMEN, PASSWORD_HEADER, USERNAME_HEADER,
 };
-use reqwest::{Client,
+use reqwest::{
     header::{HeaderMap, HeaderValue},
-    StatusCode,
+    Client, StatusCode,
 };
 
 impl User {
@@ -38,7 +38,9 @@ impl User {
             .unwrap();
         let responce = client.execute(request).await.unwrap();
         if responce.status() == StatusCode::OK {
-            return Ok(serde_json::from_str::<User>(responce.text().await.unwrap().as_str()).unwrap());
+            return Ok(
+                serde_json::from_str::<User>(responce.text().await.unwrap().as_str()).unwrap(),
+            );
         }
         Err(responce.text().await.unwrap())
     }
@@ -47,7 +49,8 @@ impl User {
         let new_data = User::get(SingDto {
             username: self.username(),
             password: self.password(),
-        }).await
+        })
+        .await
         .unwrap();
         *self = new_data.unwrap();
     }
@@ -60,7 +63,8 @@ impl User {
                 DOMEN, sing_data.username, sing_data.password
             ))
             .headers(User::build_headers_from_dto(sing_data))
-            .send().await
+            .send()
+            .await
             .unwrap();
         match responce.status() {
             StatusCode::OK => Ok(Some(responce.json().await.unwrap())),
