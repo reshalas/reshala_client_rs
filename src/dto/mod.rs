@@ -11,8 +11,7 @@ pub struct UserDTO {
     pub last_name: String,
     pub class: i16,
     pub school: i32,
-    pub email: Option<String>,
-    pub phone_number: Option<String>,
+    pub email: String,
     pub location_data: LocationData,
 }
 

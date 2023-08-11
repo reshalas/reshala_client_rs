@@ -29,6 +29,21 @@ impl User {
         headers
     }
 
+    pub async fn check_username(username: String)->bool{
+        let client = Client::new();
+        let request = client
+            .get(DOMEN.to_string() + "/users/check/" + username)
+            .build()
+            .unwrap();
+        let responce = client.execute(request).await.unwrap();
+        if responce.status() == StatusCode::OK {
+            return Ok(
+                serde_json::from_str::<bool>(responce.text().await.unwrap().as_str()).unwrap(),
+            );
+        }
+        Err(responce.text().await.unwrap())
+    }
+
     pub async fn register(user: UserDTO) -> Result<User, String> {
         let client = Client::new();
         let request = client
@@ -241,11 +256,11 @@ impl User {
     }
 
     //рейтинг
-    pub async fn rate(&mut self, mark: u8) -> Result<(), String> {
+    pub async fn rate(username: String, mark: u8) -> Result<(), String> {
         if mark > 5 {
             panic!("Wrong mark")
         }
-        let url = format!("{}/users/rate/{}", DOMEN.to_string(), mark);
+        let url = format!("{}/users/rate/{}/user/{}", DOMEN.to_string(), mark, username);
         let client = Client::new();
         let request = client.post(url).build().unwrap();
         let responce = client.execute(request).await.unwrap();

@@ -34,7 +34,6 @@ pub struct User {
     class: i16,
     school: i32,
     email: String,
-    phone_number: Option<String>,
     slots_component: SlotsComponent,
     raiting: Vec<i16>,
     tasks_component: TasksComponent,
