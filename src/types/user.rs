@@ -32,16 +32,11 @@ impl User {
     pub async fn check_username(username: String)->bool{
         let client = Client::new();
         let request = client
-            .get(DOMEN.to_string() + "/users/check/" + username)
+            .get(DOMEN.to_string() + "/users/check/" + username.as_str())
             .build()
             .unwrap();
         let responce = client.execute(request).await.unwrap();
-        if responce.status() == StatusCode::OK {
-            return Ok(
-                serde_json::from_str::<bool>(responce.text().await.unwrap().as_str()).unwrap(),
-            );
-        }
-        Err(responce.text().await.unwrap())
+        responce.status() == StatusCode::OK 
     }
 
     pub async fn register(user: UserDTO) -> Result<User, String> {
@@ -158,10 +153,6 @@ impl User {
         self.email.clone()
     }
 
-    pub fn phone_number(&self) -> Option<String> {
-        self.phone_number.clone()
-    }
-
     pub fn slots_component(&mut self) -> &mut SlotsComponent {
         &mut self.slots_component
     }
@@ -266,7 +257,6 @@ impl User {
         let responce = client.execute(request).await.unwrap();
         match responce.status() {
             StatusCode::OK => {
-                self.refresh().await;
                 Ok(())
             }
             _ => Err(responce.text().await.unwrap()),
