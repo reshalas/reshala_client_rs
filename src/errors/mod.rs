@@ -3,7 +3,7 @@ use crate::types::User;
 
 pub type SingUpResult = Result<User, SingUpError>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum SingUpError{
     NoUser,
     WrongPassword

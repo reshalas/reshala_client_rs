@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
     dto::{EmailDTO, PhoneDTO, SingDto, SlotDTO, TaskDTO, UserDTO},
+    errors::{RegisterResult, SingUpResult},
     DOMEN, PASSWORD_HEADER, USERNAME_HEADER,
 };
 use reqwest::{
@@ -29,17 +30,17 @@ impl User {
         headers
     }
 
-    pub async fn check_username(username: String)->bool{
+    pub async fn check_username(username: String) -> bool {
         let client = Client::new();
         let request = client
             .get(DOMEN.to_string() + "/users/check/" + username.as_str())
             .build()
             .unwrap();
         let responce = client.execute(request).await.unwrap();
-        responce.status() == StatusCode::OK 
+        responce.status() == StatusCode::OK
     }
 
-    pub async fn register(user: UserDTO) -> Result<User, String> {
+    pub async fn register(user: UserDTO) -> RegisterResult {
         let client = Client::new();
         let request = client
             .post(DOMEN.to_string() + "/users/register")
@@ -48,11 +49,9 @@ impl User {
             .unwrap();
         let responce = client.execute(request).await.unwrap();
         if responce.status() == StatusCode::OK {
-            return Ok(
-                serde_json::from_str::<User>(responce.text().await.unwrap().as_str()).unwrap(),
-            );
+            return Ok(responce.json().await.unwrap());
         }
-        Err(responce.text().await.unwrap())
+        Err(responce.json().await.unwrap())
     }
 
     async fn refresh(&mut self) {
@@ -62,24 +61,20 @@ impl User {
         })
         .await
         .unwrap();
-        *self = new_data.unwrap();
+        *self = new_data;
     }
 
-    pub async fn get(sing_data: SingDto) -> Result<Option<User>, String> {
+    pub async fn get(sing_data: SingDto) -> SingUpResult {
         let client = Client::new();
         let responce = client
-            .get(format!(
-                "{}/users/user?username={}&password={}",
-                DOMEN, sing_data.username, sing_data.password
-            ))
+            .get(format!("{}/users/user", DOMEN))
             .headers(User::build_headers_from_dto(sing_data))
             .send()
             .await
             .unwrap();
         match responce.status() {
-            StatusCode::OK => Ok(Some(responce.json().await.unwrap())),
-            StatusCode::NOT_FOUND => Ok(None),
-            _ => Err(responce.text().await.unwrap()),
+            StatusCode::OK => Ok(responce.json().await.unwrap()),
+            _ => Err(responce.json().await.unwrap()),
         }
     }
 
@@ -251,14 +246,17 @@ impl User {
         if mark > 5 {
             panic!("Wrong mark")
         }
-        let url = format!("{}/users/rate/{}/user/{}", DOMEN.to_string(), mark, username);
+        let url = format!(
+            "{}/users/rate/{}/user/{}",
+            DOMEN.to_string(),
+            mark,
+            username
+        );
         let client = Client::new();
         let request = client.post(url).build().unwrap();
         let responce = client.execute(request).await.unwrap();
         match responce.status() {
-            StatusCode::OK => {
-                Ok(())
-            }
+            StatusCode::OK => Ok(()),
             _ => Err(responce.text().await.unwrap()),
         }
     }
