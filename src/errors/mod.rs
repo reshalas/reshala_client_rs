@@ -6,9 +6,12 @@ pub type SingUpResult = Result<User, SingUpError>;
 #[derive(Serialize, Deserialize, Debug)]
 pub enum SingUpError{
     NoUser,
-    WrongPassword
-}
+    WrongPassword,
+    NoUsernameHeader,
+    NoPasswordHeader,
+    NoHeaders
 
+}
 pub type RegisterResult = Result<User, Vec<SingUpError>>;
 
 #[derive(Serialize, Deserialize)]
