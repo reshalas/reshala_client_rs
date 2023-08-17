@@ -12,7 +12,7 @@ pub enum SingUpError{
     NoHeaders
 
 }
-pub type RegisterResult = Result<User, Vec<SingUpError>>;
+pub type RegisterResult = Result<User, Vec<RegistrationError>>;
 
 #[derive(Serialize, Deserialize)]
 pub enum RegistrationError{
