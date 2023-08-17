@@ -67,7 +67,7 @@ impl User {
     pub async fn get(sing_data: SingDto) -> SingUpResult {
         let client = Client::new();
         let responce = client
-            .get(format!("{}/users/user", DOMEN))
+            .get(format!("{}/users/get", DOMEN))
             .headers(User::build_headers_from_dto(sing_data))
             .send()
             .await
